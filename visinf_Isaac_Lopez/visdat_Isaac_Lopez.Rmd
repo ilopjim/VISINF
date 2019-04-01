@@ -1,0 +1,191 @@
+---
+title: "VISDAT"
+author: "Isaac López Jiménez"
+date: "25 de octubre de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###VISUALIZACIÓN DE LOS DATOS
+
+Elaboración de gráficas para la visualización de los datos. El conjunto de datos utilizado es el dataset del Trabajo Fin de Máster. Son datos de una aseguradora de coches.  
+
+
+<br>
+<br>
+
+```{r library, warning = FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+library(naniar)
+library(extracat)
+library(crosstalk)
+library(htmltools)
+```
+
+<br>
+<br>
+
+```{r load}
+data <- read.csv('tfm_fraude_I_tramas.csv', header = TRUE)
+data <- subset( data, select = -ref )
+attach(data)
+
+```
+
+<br>
+<br>
+
+##Anális gráfico de valores perdidos
+  
+<br>
+<br>
+
+```{r NAS}
+n_miss(data)
+n_complete(data)
+prop_miss(data)
+prop_complete(data)
+pct_miss(data)
+pct_complete(data)
+```
+
+<br>
+  
+
+```{r summary_NA, warning = FALSE}
+miss_var_summary(data)
+miss_var_table(data)
+```
+
+<br>  
+<br>
+
+```{r ggmissvar, echo=FALSE, fig.height = 10, fig.align='center'}
+ggplotly(gg_miss_var(data)+ 
+                theme(axis.text.y=element_text(size=rel(0.7)))+
+                labs(y = 'Valores perdidos'))
+```
+
+  
+<br>  
+<br>  
+
+```{r ggmisscase, echo=FALSE, fig.align='center'}
+gg_miss_case(data)
+```
+
+<br>
+<br>
+
+```{r g1na, echo=FALSE, fig.align='center'}
+ggplot(data, aes(x = V243, y = V200)) +
+                geom_miss_point()
+
+```
+
+<br>
+<br>
+
+```{r g2na, echo=FALSE, fig.align='center'}
+ggplot(data, aes(x = V192, y = V179)) +
+        geom_miss_point(jitter=0.2)
+```
+
+<br>
+<br>
+
+```{r g3na, echo=FALSE, fig.align='center'}
+extracat::visna(data, sort = "b")
+```
+
+<br>
+<br>
+
+##Análisis gráfico de las variables
+
+<br>
+<br>
+
+```{r g1, echo=FALSE, fig.align='center'}
+plot_ly(data, x = ~V190, color = ~V163) %>%
+        add_histogram()
+```
+
+<br>
+<br>
+
+```{r g2, echo=FALSE, fig.width = 12, fig.align='center'}
+car_df <- as.data.frame(margin.table(table (V163, V215 ),1:2))
+
+g4 <- ggplot(car_df, aes(x = V215, y = Freq, fill = V163)) +
+        geom_bar(stat = "identity", position = "fill") +
+        scale_fill_manual(values = c("brown", "blue", "pink", "green", "yellow")) +
+        labs(x = "Marca del vehículo", y = "", fill = "Multas y Siniestros")+
+        theme(axis.text.x=element_text(size=rel(0.65), angle=90))
+ggplotly(g4)
+```
+
+<br>
+<br>
+
+```{r g3, echo=FALSE, fig.align='center'}
+fraude_df <- as.data.frame(margin.table(table (V163, y),1:2))
+levels(fraude_df$y) <- c("No Fraude","Fraude")
+
+  
+
+
+
+g5 <- ggplot(fraude_df, aes(x = y, y = Freq, fill = V163)) +
+        geom_bar(stat = "identity", position = "fill") +
+        scale_fill_brewer(palette = 'Set1') +
+        labs(x = "Fraude", y = "", fill = "Multas y Siniestros")
+ggplotly(g5)
+```
+
+<br>
+<br>
+
+```{r g4, echo=FALSE, fig.height = 16, fig.align='center'}
+num_car_df <- as.data.frame(margin.table(table (V215),1))
+num_car_df$V215 <- factor(num_car_df$V215,
+                          levels = num_car_df$V215[order(num_car_df$Freq)])
+g6 <- ggplot(num_car_df, aes(x = Freq, y = V215)) +
+        geom_point(na.rm = TRUE) +
+        theme(axis.text.y=element_text(size=rel(0.8)),
+                panel.background = element_rect(fill = "lightblue",
+                                              colour = "lightblue",
+                                              size = 0.5, linetype = "solid"),
+                panel.grid.major =  element_line(linetype = 'dashed')) + 
+        labs(x = 'Población de vehículos \nde la aseguradora', y = 'Marca del vehículo')
+
+g6
+```
+
+<br>
+<br>
+
+```{r g5, echo=FALSE, warning=FALSE, fig.align='center'}
+g8 <- ggplot(data, aes(V221)) +
+        geom_histogram(aes(y = ..density..), binwidth = 10) +
+        stat_density(geom = "line", size = 0.2, color = "blue") +
+        labs(x = "V221", y = "")
+ggplotly(g8)
+```
+
+<br>
+<br>
+
+```{r g6, echo=FALSE, warning=FALSE, fig.align='center'}
+g9 <- ggplot(data, aes(V221, fill = V190)) +
+        geom_density(position = "stack") +
+        xlim(0,500)
+ggplotly(g9)
+```
+
+<br>
+<br>
